@@ -202,7 +202,7 @@ export default function App() {
   };
 
   return (
-    <div className="relative min-h-screen w-screen flex flex-col bg-[#0B1120] text-[#F8FAFC] font-sans overflow-x-hidden selection:bg-sky-500/30 selection:text-white">
+    <div className="relative min-h-screen w-full flex flex-col bg-[#0B1120] text-[#F8FAFC] font-sans overflow-x-hidden selection:bg-sky-500/30 selection:text-white">
       
       {/* Ambient Blue & Black Background Atmosphere */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
@@ -221,66 +221,18 @@ export default function App() {
         />
       </div>
 
-      {/* Top Navigation Bar (Inspired by NEONE header) */}
-      <nav className="w-full h-18 px-6 sm:px-12 flex items-center justify-between relative z-30 border-b border-sky-500/10 bg-[#0B1120]/75 backdrop-blur-xl">
-        {/* Logo */}
-        <div className="flex items-center gap-2.5 cursor-pointer">
-          <div className="w-6 h-6 flex items-center justify-center text-sky-400">
-            <Sparkles className="w-5 h-5 fill-sky-400 text-sky-400" />
-          </div>
-          <span className="font-space font-bold text-base tracking-wider text-white">
-            SPACEVERSE
-          </span>
-        </div>
-
-        {/* Center Nav Links */}
-        <div className="hidden md:flex items-center gap-7 text-xs font-medium text-slate-300">
-          <button
-            onClick={() => handleSend("What are the most fascinating recent discoveries in the Solar System?")}
-            className="hover:text-sky-300 transition-colors flex items-center gap-1"
-          >
-            Solar System
-          </button>
-          <button
-            onClick={() => handleSend("Explain how galaxies evolve and what happens during cosmic collisions.")}
-            className="hover:text-sky-300 transition-colors flex items-center gap-1"
-          >
-            Galaxies
-          </button>
-          <button
-            onClick={() => handleSend("What are the leading theories about event horizons and quantum black holes?")}
-            className="hover:text-sky-300 transition-colors flex items-center gap-1"
-          >
-            Black Holes
-          </button>
-          <button
-            onClick={() => handleSend("What are NASA and ESA's top flagship space exploration missions right now?")}
-            className="hover:text-sky-300 transition-colors flex items-center gap-1"
-          >
-            Missions
-          </button>
-        </div>
-
-        {/* Right CTA */}
-        <div className="flex items-center gap-3">
-          {messages.length > 0 && (
-            <button
-              onClick={handleClear}
-              className="text-xs text-slate-400 hover:text-red-400 transition-colors px-3 py-1.5 rounded-full hover:bg-slate-800/60 flex items-center gap-1.5"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              <span>Clear</span>
-            </button>
-          )}
-
-          <button
-            onClick={messages.length > 0 ? handleClear : focusInput}
-            className="px-4 py-1.5 rounded-full text-xs font-semibold bg-white text-slate-900 hover:bg-sky-100 hover:shadow-[0_0_25px_rgba(255,255,255,0.4)] transition-all active:scale-95 flex items-center gap-1.5"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-blue-600 fill-blue-600" />
-            <span>{messages.length > 0 ? 'New Chat' : 'Get Started'}</span>
-          </button>
-        </div>
+      {/* Top Navigation Bar */}
+      <nav className="sticky top-0 w-full h-16 px-6 sm:px-12 flex items-center justify-end z-40 border-b border-sky-500/10 bg-[#0B1120]/85 backdrop-blur-xl transition-all">
+        <button
+          onClick={() => {
+            handleClear();
+            focusInput();
+          }}
+          className="px-4 py-1.5 rounded-full text-xs font-semibold bg-white text-slate-900 hover:bg-sky-100 hover:shadow-[0_0_25px_rgba(255,255,255,0.4)] transition-all active:scale-95 flex items-center gap-1.5"
+        >
+          <Sparkles className="w-3.5 h-3.5 text-blue-600 fill-blue-600" />
+          <span>New Chat</span>
+        </button>
       </nav>
 
       {/* Main Container */}
@@ -340,11 +292,11 @@ export default function App() {
           </div>
         </div>
 
-        {/* FLOATING GLOWING DASHBOARD / CHAT CONSOLE (Matching the reference preview) */}
+        {/* FLOATING GLOWING DASHBOARD / CHAT CONSOLE */}
         <div
           ref={consoleRef}
-          className={`w-full max-w-4xl console-card rounded-2xl overflow-hidden transition-all duration-300 relative z-20 flex flex-col ${
-            isConsoleExpanded ? 'min-h-[750px]' : 'min-h-[520px]'
+          className={`w-full max-w-4xl console-card rounded-2xl overflow-hidden transition-all duration-300 relative z-20 flex flex-col shadow-2xl ${
+            isConsoleExpanded ? 'h-[85vh] min-h-[680px]' : 'h-[620px] sm:h-[680px]'
           }`}
         >
           {/* Top Console Bar */}
@@ -363,11 +315,6 @@ export default function App() {
 
             {/* Status & actions */}
             <div className="flex items-center gap-3 text-xs">
-              <span className="flex items-center gap-1.5 text-[11px] text-sky-300/80 font-mono">
-                <span className="w-2 h-2 rounded-full bg-sky-400 animate-pulse" />
-                {backendHealth?.geminiStatus === 'configured' ? 'Gemini 3.8 Flash Online' : 'Active'}
-              </span>
-
               <button
                 onClick={() => setIsConsoleExpanded(!isConsoleExpanded)}
                 className="text-slate-400 hover:text-white transition-colors p-1"
@@ -379,7 +326,7 @@ export default function App() {
           </div>
 
           {/* Console Body: Welcome Cards OR Chat Stream */}
-          <div className="flex-1 overflow-y-auto p-5 sm:p-6 flex flex-col justify-between">
+          <div className="flex-1 min-h-0 overflow-y-auto p-5 sm:p-6 flex flex-col justify-between">
             {messages.length === 0 ? (
               /* Initial State inside Console */
               <div className="my-auto py-6 flex flex-col items-center">
