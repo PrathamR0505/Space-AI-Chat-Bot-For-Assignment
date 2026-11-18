@@ -45,5 +45,5 @@ export function getGeminiClient() {
 }
 
 export function getGeminiModel() {
-  return process.env.GEMINI_MODEL || 'gemini-3.8-flash';
+  return process.env.GEMINI_MODEL || 'gemini-3.5-flash';
 }

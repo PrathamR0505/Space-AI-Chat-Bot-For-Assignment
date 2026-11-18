@@ -30,17 +30,22 @@ export async function checkBackendHealth() {
  */
 export async function sendChatMessage(messages) {
   try {
+    const lastContent = Array.isArray(messages) && messages.length > 0 ? messages[messages.length - 1]?.content : '';
     const response = await fetch(`${API_BASE_URL}/chat`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ messages }),
+      body: JSON.stringify({
+        messages,
+        message: lastContent,
+        prompt: lastContent,
+      }),
     });
 
     const data = await response.json();
 
-    if (!response.ok) {
+    if (!response.ok || data.success === false) {
       const error = new Error(data.error || 'Failed to get cosmic response.');
       error.details = data.details || data.message || '';
       error.code = data.code || 'API_ERROR';
@@ -49,7 +54,7 @@ export async function sendChatMessage(messages) {
     }
 
     return {
-      reply: data.reply,
+      reply: data.reply || data.response || data.text || '',
       model: data.model,
       timestamp: data.timestamp || new Date().toISOString(),
     };

@@ -5,18 +5,29 @@ const router = express.Router();
 
 router.post('/chat', async (req, res) => {
   try {
-    const { messages } = req.body;
+    let messages = req.body.messages;
+
+    // Support single message or prompt payloads: { message: "..." } or { prompt: "..." }
+    if (!messages) {
+      if (typeof req.body.message === 'string' && req.body.message.trim()) {
+        messages = [{ role: 'user', content: req.body.message.trim() }];
+      } else if (typeof req.body.prompt === 'string' && req.body.prompt.trim()) {
+        messages = [{ role: 'user', content: req.body.prompt.trim() }];
+      }
+    }
 
     // 1. Validate request
     if (!messages || !Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({
-        error: 'Invalid request: "messages" array is required and cannot be empty.',
+        success: false,
+        error: 'Invalid request: "messages" array or "message" text is required and cannot be empty.',
       });
     }
 
     const lastMessage = messages[messages.length - 1];
     if (!lastMessage || !lastMessage.content || typeof lastMessage.content !== 'string' || !lastMessage.content.trim()) {
       return res.status(400).json({
+        success: false,
         error: 'Invalid request: The last message must have non-empty text content.',
       });
     }
@@ -46,31 +57,51 @@ router.post('/chat', async (req, res) => {
       });
     }
 
-    const modelName = getGeminiModel();
+    // 4. Call Gemini API with automatic model fallback for resilience
+    const requestedModel = getGeminiModel();
+    const candidateModels = [
+      requestedModel,
+      'gemini-3.5-flash',
+      'gemini-3.5-flash-lite',
+      'gemini-3.1-flash-lite',
+    ].filter((m, i, arr) => arr.indexOf(m) === i);
 
-    // 4. Call Gemini API
-    const response = await ai.models.generateContent({
-      model: modelName,
-      contents,
-      config: {
-        systemInstruction: SPACEVERSE_SYSTEM_INSTRUCTION,
-        temperature: 0.4,
-      },
-    });
+    let response = null;
+    let usedModel = requestedModel;
+    let lastGenError = null;
+
+    for (const modelToTry of candidateModels) {
+      try {
+        response = await ai.models.generateContent({
+          model: modelToTry,
+          contents,
+          config: {
+            systemInstruction: SPACEVERSE_SYSTEM_INSTRUCTION,
+            temperature: 0.4,
+          },
+        });
+        if (response && response.text) {
+          usedModel = modelToTry;
+          break;
+        }
+      } catch (err) {
+        lastGenError = err;
+        console.warn(`Model ${modelToTry} failed (${err?.message || 'unknown error'}). Trying fallback if available...`);
+      }
+    }
+
+    if (!response || !response.text) {
+      throw lastGenError || new Error('No candidate model could fulfill the cosmic query.');
+    }
 
     // 5. Extract text response
     const replyText = response.text;
 
-    if (!replyText) {
-      return res.status(502).json({
-        error: 'No text response received from Gemini.',
-        details: 'The model did not return any candidate text.',
-      });
-    }
-
     return res.status(200).json({
+      success: true,
       reply: replyText,
-      model: modelName,
+      response: replyText,
+      model: usedModel,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {

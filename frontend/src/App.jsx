@@ -130,12 +130,16 @@ export default function App() {
       const res = await fetch(`${API_BASE_URL}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: newHistory }),
+        body: JSON.stringify({
+          messages: newHistory,
+          message: promptText,
+          prompt: promptText,
+        }),
       });
 
       const data = await res.json();
 
-      if (!res.ok) {
+      if (!res.ok || data.success === false) {
         const err = new Error(data.error || 'Failed to receive cosmic response.');
         err.details = data.details || data.message || '';
         err.code = data.code || 'API_ERROR';
@@ -145,7 +149,7 @@ export default function App() {
       const aiMessage = {
         id: 'ai-' + Date.now(),
         role: 'assistant',
-        content: data.reply,
+        content: data.reply || data.response || data.text || '',
         model: data.model || 'Gemini 3.8 Flash',
         timestamp: data.timestamp || new Date().toISOString(),
       };
